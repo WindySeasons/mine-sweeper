@@ -10,18 +10,28 @@ class MinesweeperUI:
         self.board = Board()
         self.root = tk.Tk()
         self.root.title(WINDOW_TITLE)
+
+        # 创建菜单下方、网格上方的容器
+        top_frame = tk.Frame(self.root)
+        top_frame.grid(row=0, column=0, columnspan=GRID_SIZE, pady=5)
+        self.remaining_flags=NUM_MINES
+        self.flags_label = tk.Label(top_frame, text=f"Flags: {self.remaining_flags}")
+        self.flags_label.grid(row=0, column=0, padx=10)
+
+
+        self.restart_button = tk.Button(top_frame, text="Restart", command=self._restart_game)
+        self.restart_button.grid(row=0, column=1, padx=10)
+        self.game_over=False
+
+        self.start_time=None
+        self.timer_running=False
+        self.timer_label = tk.Label(top_frame, text="Time: 0s")
+        self.timer_label.grid(row=0, column=2, padx=10)
+
+
+        self.difficulty="初级"  #默认难度
+        # 调整网格按钮的布局位置
         self.buttons = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-        self.start_time = None
-        self.timer_running = False
-        self.timer_label = tk.Label(self.root, text="Time: 0s")
-        self.timer_label.grid(row=GRID_SIZE, column=0, columnspan=GRID_SIZE)
-        self.restart_button = tk.Button(self.root, text="Restart", command=self._restart_game)
-        self.restart_button.grid(row=GRID_SIZE + 1, column=0, columnspan=GRID_SIZE)
-        self.game_over = False
-        self.remaining_flags = NUM_MINES
-        self.flags_label = tk.Label(self.root, text=f"Flags: {self.remaining_flags}")
-        self.flags_label.grid(row=GRID_SIZE + 2, column=0, columnspan=GRID_SIZE)
-        self.difficulty = "初级"  # 默认难度
         self._create_widgets()
         self._create_menu()
 
@@ -30,7 +40,7 @@ class MinesweeperUI:
         for row in range(GRID_SIZE):
             for col in range(GRID_SIZE):
                 btn = tk.Button(self.root, width=2, height=1)
-                btn.grid(row=row, column=col, padx=1, pady=1)
+                btn.grid(row=row + 1, column=col, padx=1, pady=1)  # 调整行号以适应顶部容器
                 btn.bind("<Button-1>", lambda event, r=row, c=col: self._on_left_click(r, c))
                 btn.bind("<Button-3>", lambda event, r=row, c=col: self._on_right_click(r, c))
                 self.buttons[row][col] = btn
