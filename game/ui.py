@@ -4,6 +4,7 @@ from game.board import Board
 from game.settings import GRID_SIZE, CELL_SIZE, WINDOW_TITLE, NUM_MINES
 import time
 from threading import Thread
+from game.records import load_records, save_records
 
 class MinesweeperUI:
     def __init__(self):
@@ -35,6 +36,9 @@ class MinesweeperUI:
         self._create_widgets()
         self._create_menu()
 
+        self.revealed_cells = 0  # 记录已揭示的非雷单元格数量
+        self.best_times = load_records()  # 加载记录数据
+
     def _create_widgets(self):
         """创建网格按钮"""
         for row in range(GRID_SIZE):
@@ -62,6 +66,7 @@ class MinesweeperUI:
         game_menu.add_cascade(label="难度", menu=difficulty_menu)
 
         game_menu.add_separator()
+        game_menu.add_command(label="扫雷英雄榜", command=self._show_records)  # 添加“扫雷英雄榜”选项
         game_menu.add_command(label="退出", command=self.root.quit)
         menu_bar.add_cascade(label="游戏", menu=game_menu)
 
@@ -126,6 +131,10 @@ class MinesweeperUI:
             self._reveal_zeros(row, col, set())
         else:
             self.buttons[row][col].config(text=str(value), state="disabled")
+            self.revealed_cells += 1
+
+        if self.revealed_cells == GRID_SIZE * GRID_SIZE - NUM_MINES:
+            self._game_won()
 
     def _update_flags_label(self):
         """更新标记数量显示"""
@@ -162,6 +171,74 @@ class MinesweeperUI:
             for col in range(GRID_SIZE):
                 self.buttons[row][col].config(state="disabled")
 
+    def _game_won(self):
+        """游戏胜利"""
+        self._stop_timer()
+        self.game_over = True
+        elapsed_time = int(time.time() - self.start_time)
+        messagebox.showinfo("胜利", f"恭喜你赢了！用时: {elapsed_time} 秒")
+
+        if self.difficulty in self.best_times and elapsed_time < self.best_times[self.difficulty]["time"]:
+            self.best_times[self.difficulty]["time"] = elapsed_time
+            self._record_score(elapsed_time)
+
+    def _record_score(self, elapsed_time):
+        """记录玩家成绩"""
+        record_window = tk.Toplevel(self.root)
+        record_window.title("记录成绩")
+        record_window.transient(self.root)  # 设置为模态框
+        record_window.grab_set()  # 禁止操作主窗口
+
+        tk.Label(record_window, text=f"恭喜你在 {self.difficulty} 难度下创造了新纪录！").grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(record_window, text="请输入你的名字:").grid(row=1, column=0, padx=5, pady=5)
+        name_entry = tk.Entry(record_window)
+        name_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        def save_record():
+            name = name_entry.get().strip()
+            if name:
+                self.best_times[self.difficulty]["name"] = name
+                self.best_times[self.difficulty]["time"] = elapsed_time
+                save_records(self.best_times)  # 保存记录数据
+                record_window.destroy()
+
+        def reset_scores():
+            """重新初始化记录数据"""
+            self.best_times = {
+                "初级": {"time": 999, "name": "匿名"},
+                "中级": {"time": 999, "name": "匿名"},
+                "高级": {"time": 999, "name": "匿名"}
+            }
+            save_records(self.best_times)  # 保存初始化后的记录
+            messagebox.showinfo("提示", "记录已重置！")
+
+        tk.Button(record_window, text="重新计分", command=reset_scores).grid(row=2, column=0, padx=10, pady=10)
+        tk.Button(record_window, text="确定", command=record_window.destroy).grid(row=2, column=1, padx=10, pady=10)
+
+        def on_close():
+            """提示用户关闭模态框"""
+            self.root.bell()  # 发出提示音
+            messagebox.showwarning("提示", "请先关闭记录窗口！")
+
+        record_window.protocol("WM_DELETE_WINDOW", on_close)  # 禁止直接关闭窗口
+        record_window.wait_window()  # 等待模态框关闭
+
+    def _show_records(self):
+        """显示记录界面"""
+        records_window = tk.Toplevel(self.root)
+        records_window.title("记录")
+
+        tk.Label(records_window, text="扫雷游戏记录", font=("Arial", 14)).grid(row=0, column=0, columnspan=3, pady=10)
+
+        tk.Label(records_window, text="难度").grid(row=1, column=0, padx=10)
+        tk.Label(records_window, text="玩家").grid(row=1, column=1, padx=10)
+        tk.Label(records_window, text="时间 (秒)").grid(row=1, column=2, padx=10)
+
+        for i, (difficulty, record) in enumerate(self.best_times.items(), start=2):
+            tk.Label(records_window, text=difficulty).grid(row=i, column=0, padx=10)
+            tk.Label(records_window, text=record["name"]).grid(row=i, column=1, padx=10)
+            tk.Label(records_window, text=record["time"]).grid(row=i, column=2, padx=10)
+
     def _restart_game(self):
         """重新开始游戏"""
         self._stop_timer()
@@ -169,6 +246,7 @@ class MinesweeperUI:
         self.start_time = None
         self.game_over = False
         self.remaining_flags = NUM_MINES
+        self.revealed_cells = 0
         self.timer_label.config(text="Time: 0s")
         self.flags_label.config(text=f"Flags: {self.remaining_flags}")
 
