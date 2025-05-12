@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from game.board import Board
 from game.settings import GRID_SIZE, CELL_SIZE, WINDOW_TITLE, NUM_MINES
 import time
@@ -21,6 +22,7 @@ class MinesweeperUI:
         self.flags_label = tk.Label(self.root, text=f"Flags: {self.remaining_flags}")
         self.flags_label.grid(row=GRID_SIZE + 2, column=0, columnspan=GRID_SIZE)
         self._create_widgets()
+        self._create_menu()
 
     def _create_widgets(self):
         """创建网格按钮"""
@@ -31,6 +33,24 @@ class MinesweeperUI:
                 btn.bind("<Button-1>", lambda event, r=row, c=col: self._on_left_click(r, c))
                 btn.bind("<Button-3>", lambda event, r=row, c=col: self._on_right_click(r, c))
                 self.buttons[row][col] = btn
+
+    def _create_menu(self):
+        """创建菜单栏"""
+        menu_bar = tk.Menu(self.root)
+
+        # 游戏菜单
+        game_menu = tk.Menu(menu_bar, tearoff=0)
+        game_menu.add_command(label="重新开始", command=self._restart_game)
+        game_menu.add_separator()
+        game_menu.add_command(label="退出", command=self.root.quit)
+        menu_bar.add_cascade(label="游戏", menu=game_menu)
+
+        # 帮助菜单
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu.add_command(label="关于", command=self._show_about)
+        menu_bar.add_cascade(label="帮助", menu=help_menu)
+
+        self.root.config(menu=menu_bar)
 
     def _start_timer(self):
         """启动计时器"""
@@ -134,6 +154,10 @@ class MinesweeperUI:
         for row in range(GRID_SIZE):
             for col in range(GRID_SIZE):
                 self.buttons[row][col].config(text="", bg="SystemButtonFace", state="normal")
+
+    def _show_about(self):
+        """显示关于信息"""
+        messagebox.showinfo("关于", "扫雷游戏\n作者: 你的名字\n版本: 1.0")
 
     def run(self):
         """运行游戏"""
