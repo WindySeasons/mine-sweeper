@@ -6,6 +6,8 @@ import time
 from threading import Thread
 from game.records import load_records, save_records
 import logging
+import sys
+import os
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,6 +17,14 @@ class MinesweeperUI:
         self.board = Board()
         self.root = tk.Tk()
         self.root.title(WINDOW_TITLE)
+
+        # 动态设置图标路径
+        if hasattr(sys, "_MEIPASS"):
+            icon_path = os.path.join(sys._MEIPASS, "assets/images/icon.ico")
+        else:
+            icon_path = "assets/images/icon.ico"
+
+        self.root.iconbitmap(icon_path)  # 设置任务栏图标
 
         # 创建菜单下方、网格上方的容器
         top_frame = tk.Frame(self.root)

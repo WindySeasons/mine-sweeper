@@ -26,6 +26,8 @@ def build(mode):
         "--windowed",
         f"--icon=assets/images/icon.ico",
         f"--distpath={output_dir}",  # 指定输出目录
+        f"--name=扫雷",
+        f"--add-data=assets/images/icon.ico;assets/images",  # 添加图标资源
         "main.py"
     ])
 
