@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from game.board import Board
-from game.settings import GRID_SIZE, CELL_SIZE, WINDOW_TITLE, NUM_MINES
+from game.settings import GRID_ROWS, GRID_COLS, CELL_SIZE, WINDOW_TITLE, NUM_MINES
 import time
 from threading import Thread
 from game.records import load_records, save_records
@@ -18,7 +18,7 @@ class MinesweeperUI:
 
         # 创建菜单下方、网格上方的容器
         top_frame = tk.Frame(self.root)
-        top_frame.grid(row=0, column=0, columnspan=GRID_SIZE, pady=5)
+        top_frame.grid(row=0, column=0, columnspan=GRID_COLS, pady=5)
         self.remaining_flags=NUM_MINES
         self.flags_label = tk.Label(top_frame, text=f"Flags: {self.remaining_flags}")
         self.flags_label.grid(row=0, column=0, padx=10)
@@ -36,7 +36,7 @@ class MinesweeperUI:
 
         self.difficulty="初级"  #默认难度
         # 调整网格按钮的布局位置
-        self.buttons = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+        self.buttons = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
         self._create_widgets()
         self._create_menu()
 
@@ -46,8 +46,8 @@ class MinesweeperUI:
 
     def _create_widgets(self):
         """创建网格按钮"""
-        for row in range(GRID_SIZE):
-            for col in range(GRID_SIZE):
+        for row in range(GRID_ROWS):
+            for col in range(GRID_COLS):
                 btn = tk.Button(self.root, width=2, height=1)
                 btn.grid(row=row + 1, column=col, padx=1, pady=1)  # 调整行号以适应顶部容器
                 btn.bind("<Button-1>", lambda event, r=row, c=col: self._on_left_click(r, c))
@@ -66,7 +66,7 @@ class MinesweeperUI:
         difficulty_menu = tk.Menu(game_menu, tearoff=0)
         difficulty_menu.add_command(label="初级 (9x9, 10 雷)", command=lambda: self._set_difficulty("初级"))
         difficulty_menu.add_command(label="中级 (16x16, 40 雷)", command=lambda: self._set_difficulty("中级"))
-        difficulty_menu.add_command(label="高级 (30x16, 99 雷)", command=lambda: self._set_difficulty("高级"))
+        difficulty_menu.add_command(label="高级 (16x30, 99 雷)", command=lambda: self._set_difficulty("高级"))
         difficulty_menu.add_command(label="自定义", command=self._custom_difficulty)
         game_menu.add_cascade(label="难度", menu=difficulty_menu)
 
@@ -123,7 +123,7 @@ class MinesweeperUI:
             
             for dr, dc in directions:
                 nr, nc = row + dr, col + dc
-                if 0 <= nr < GRID_SIZE and 0 <= nc < GRID_SIZE:
+                if 0 <= nr < GRID_ROWS and 0 <= nc < GRID_COLS:
                     self._reveal_zeros(nr, nc)
         
         #如果已经揭露了，就不用再重新揭露了
@@ -158,7 +158,7 @@ class MinesweeperUI:
             self.revealed_cells += 1
             logging.debug(f"Revealed cells: {self.revealed_cells}")
 
-        if self.revealed_cells == GRID_SIZE * GRID_SIZE - NUM_MINES:
+        if self.revealed_cells == GRID_ROWS * GRID_COLS - NUM_MINES:
             self._game_won()
 
     def _update_flags_label(self):
@@ -192,8 +192,8 @@ class MinesweeperUI:
         self.game_over = True
         for row, col in self.board.mines:
             self.buttons[row][col].config(text="💣", bg="red")
-        for row in range(GRID_SIZE):
-            for col in range(GRID_SIZE):
+        for row in range(GRID_ROWS):
+            for col in range(GRID_COLS):
                 self.buttons[row][col].config(state="disabled")
 
     def _game_won(self):
@@ -302,7 +302,7 @@ class MinesweeperUI:
         """测试游戏胜利流程"""
         if self.start_time is None:
             self.start_time = time.time()  # 初始化开始时间
-        self.revealed_cells = GRID_SIZE * GRID_SIZE - NUM_MINES  # 模拟所有非雷单元格已被揭示
+        self.revealed_cells = GRID_ROWS * GRID_COLS - NUM_MINES  # 模拟所有非雷单元格已被揭示
         self._game_won()
 
     def _restart_game(self):
@@ -321,7 +321,7 @@ class MinesweeperUI:
         for row in range(len(self.buttons)):
             for col in range(len(self.buttons[row])):
                 self.buttons[row][col].destroy()
-        self.buttons = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+        self.buttons = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
         self._create_widgets()
 
     def _show_about(self):
@@ -336,7 +336,7 @@ class MinesweeperUI:
         elif difficulty == "中级":
             self._update_settings(16,16, 40)
         elif difficulty == "高级":
-            self._update_settings(30,16, 99)
+            self._update_settings(16,30, 99)
         self._restart_game()
 
     def _custom_difficulty(self):
@@ -370,12 +370,22 @@ class MinesweeperUI:
 
         tk.Button(custom_window, text="应用", command=apply_custom_settings).grid(row=2, column=0, columnspan=3, pady=10)
 
-    def _update_settings(self, rows,cols, mines):
-        """更新游戏设置"""
-        global GRID_SIZE, NUM_MINES
-        GRID_SIZE = rows
+    def _update_settings(self, rows, cols, mines):
+        """更新游戏设置并重新初始化棋盘和按钮网格"""
+        global GRID_ROWS, GRID_COLS, NUM_MINES
+        GRID_ROWS = rows
+        GRID_COLS = cols
         NUM_MINES = mines
-        self.board = Board()  # 更新游戏逻辑
+
+        # 更新逻辑棋盘
+        self.board.update_board(rows, cols, mines)
+
+        # 重新创建按钮网格
+        for row in range(len(self.buttons)):
+            for col in range(len(self.buttons[row])):
+                self.buttons[row][col].destroy()
+        self.buttons = [[None for _ in range(cols)] for _ in range(rows)]
+        self._create_widgets()  # 重新创建网格按钮
 
     def run(self):
         """运行游戏"""
