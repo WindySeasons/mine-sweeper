@@ -164,7 +164,7 @@ class MinesweeperUI:
             self._reveal_zeros(row, col)
         else:
             self.visited.add((row, col))
-            self.buttons[row][col].config(text=str(value), state="disabled")
+            self.buttons[row][col].config(text=str(value), state="disabled", bg="lightgrey")
             self.revealed_cells += 1
             logging.debug(f"Revealed cells: {self.revealed_cells}")
 
