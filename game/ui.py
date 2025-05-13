@@ -72,7 +72,12 @@ class MinesweeperUI:
 
         game_menu.add_separator()
         game_menu.add_command(label="扫雷英雄榜", command=self._show_records)
-        game_menu.add_command(label="测试游戏胜利", command=self._test_game_won)  # 添加测试选项
+        # 根据 IS_TEST_VERSION 决定是否显示测试选项
+        import importlib
+        from game import settings
+        importlib.reload(settings)
+        if settings.IS_TEST_VERSION:
+            game_menu.add_command(label="测试游戏胜利", command=self._test_game_won)  # 添加测试选项
         game_menu.add_command(label="退出", command=self.root.quit)
         menu_bar.add_cascade(label="游戏", menu=game_menu)
 
@@ -321,7 +326,7 @@ class MinesweeperUI:
 
     def _show_about(self):
         """显示关于信息"""
-        messagebox.showinfo("关于", "扫雷游戏\n作者: 你的名字\n版本: 1.0")
+        messagebox.showinfo("关于", "扫雷游戏\n作者: 耿耿星河\n版本: 1.0")
 
     def _set_difficulty(self, difficulty):
         """设置游戏难度"""

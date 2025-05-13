@@ -20,11 +20,40 @@
 pip install -r requirements.txt
 ```
 
-### 运行游戏
-使用以下命令运行游戏：
+### 构建说明
 
+#### 构建测试版
+运行以下命令以构建测试版：
 ```bash
-python main.py
+python build.py test
+```
+
+#### 构建发布版
+运行以下命令以构建发布版：
+```bash
+python build.py release
+```
+
+#### 构建脚本说明
+- `build.py` 是用于构建的脚本。
+- 根据传入的参数（`test` 或 `release`），动态修改 `settings.py` 中的 `IS_TEST_VERSION` 值。
+- 使用 `PyInstaller` 将项目打包为独立的可执行文件。
+
+### 运行游戏
+构建完成后，运行生成的可执行文件即可启动游戏。
+
+### 本地运行程序
+
+#### 运行测试版
+使用以下命令运行测试版：
+```bash
+python main.py --test
+```
+
+#### 运行发布版
+使用以下命令运行发布版：
+```bash
+python main.py --release
 ```
 
 ### 打包说明
