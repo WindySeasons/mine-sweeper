@@ -5,6 +5,7 @@ class Board:
     def __init__(self):
         self.grid = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
         self.mines = set()
+        self.revealed_cells = 0  # Track the number of revealed cells
         self._place_mines()
         self._calculate_numbers()
 
@@ -38,5 +39,7 @@ class Board:
     def reveal_cell(self, row, col):
         """揭示单元格，返回其值"""
         if 0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE:
+            if self.grid[row][col] != -1:  # Only count non-mine cells
+                self.revealed_cells += 1
             return self.grid[row][col]
-        return None
+        return None#这里有问题要修改
